@@ -6,7 +6,7 @@ from flask_pymongo import PyMongo
 app = Flask(__name__)
 
 config = ConfigParser.ConfigParser()
-config.read('configs/local.env')
+config.read('app/configs/local.env')
 
 
 app.config['MONGO_DBNAME'] = config.get('MONGO', 'db.db')
