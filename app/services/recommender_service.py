@@ -18,21 +18,15 @@ def visualize_data():
 def create_model(mongo):
     all_data = pandas.DataFrame.from_dict(Dao.mongo_data_dao().find_all(mongo))
     train_data, test_data = train_test_split(all_data, test_size=0.10, random_state=0)
-    popularity_reco = Recommenders.popularity_recommender()
-    op = popularity_reco.create_model(train_data, 'user', 'plan', ['plan', 'state'])
+    popularity_reco = Recommenders.similar_recommender()
+    op = popularity_reco.create_model(train_data, 'user', 'plan', ['user', 'plan', 'state'])
     Dao.mongo_model_dao().drop(mongo)
-    print('dropped old model')
     Dao.mongo_model_dao().persist_many(mongo, loads(op.to_json(orient='records')))
     print('===== Inserted ====')
     print(op)
 
 def recommend_popular(mongo):
-    all_data = pandas.read_json('dataset/user_activity.json')
-    train_data, test_data = train_test_split(all_data, test_size = 0.10, random_state=0)
-    popularity_reco = Recommenders.popularity_recommender()
-    popularity_reco.create_model(train_data, 'user', 'plan', ['plan', 'state'])
-    users = test_data['user'].unique()
-    return popularity_reco.recommend(users[0])
+    return []
 
 def recommend_similar(mongo):
     all_data = pandas.read_json('dataset/user_activity.json')
