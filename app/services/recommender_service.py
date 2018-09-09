@@ -15,15 +15,23 @@ def visualize_data():
 
     print(all_data_grouped)
 
-def create_model(mongo):
+def create_model_v1(mongo):
     all_data = pandas.DataFrame.from_dict(Dao.mongo_data_dao().find_all(mongo))
     train_data, test_data = train_test_split(all_data, test_size=0.10, random_state=0)
-    popularity_reco = Recommenders.similar_recommender()
-    op = popularity_reco.create_model(train_data, 'user', 'plan', ['user', 'plan', 'state'])
+    similarity_reco = Recommenders.similar_recommender()
+    op = similarity_reco.create_model_v2(train_data, 'user', 'plan', ['plan', 'state'])
     Dao.mongo_model_dao().drop(mongo)
     Dao.mongo_model_dao().persist_many(mongo, loads(op.to_json(orient='records')))
-    print('===== Inserted ====')
     print(op)
+
+def create_model_v2(mongo, request_json):
+    all_data = pandas.DataFrame.from_dict(Dao.mongo_data_dao().find_all(mongo))
+    train_data, test_data = train_test_split(all_data, test_size=0.10, random_state=0)
+    similarity_reco = Recommenders.similar_recommender()
+    reco_meta = Dao.mongo_reco_meta_dao().getOne(mongo, request_json['id'])
+    train_data_grouped = similarity_reco.create_model_v2(train_data, reco_meta['user_field'], reco_meta['item_field'], reco_meta['features'][0]['id'])
+    similarity_reco.correlate(train_data_grouped, reco_meta['user_field'], reco_meta['item_field'], reco_meta['features'][0]['id'])
+
 
 def recommend_popular(mongo):
     return []

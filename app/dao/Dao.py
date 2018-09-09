@@ -2,7 +2,7 @@ class mongo_data_dao():
 
     def find_all(self, mongo):
         arr = []
-        for doc in mongo.db.RecommenderData.find():
+        for doc in mongo.db.RecommenderData.find({}):
             arr.append(doc)
         return arr
 
@@ -19,3 +19,10 @@ class mongo_model_dao():
     def persist(self, mongo, doc):
         mongo.db.RecommenderModel.save(doc)
         print('model saved successfully!')
+
+class mongo_reco_meta_dao():
+
+    def getOne(self, mongo, id):
+        for doc in mongo.db.RecommenderMeta.find({'_id' : id}):
+            return doc
+

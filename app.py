@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from app.services import recommender_service
 import ConfigParser
 from flask_pymongo import PyMongo
@@ -21,7 +21,8 @@ def test1():
 
 @app.route('/api/recommender/model/create', methods=['POST'])
 def create_model():
-    recommender_service.create_model(mongo)
+    request_json = request.get_json()
+    recommender_service.create_model_v2(mongo, request_json)
     return jsonify({"status" : 200})
 
 
