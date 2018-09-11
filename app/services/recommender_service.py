@@ -30,7 +30,7 @@ def create_model_v2(mongo, request_json):
     similarity_reco = Recommenders.similar_recommender()
     reco_meta = Dao.mongo_reco_meta_dao().getOne(mongo, request_json['id'])
     train_data_grouped = similarity_reco.create_model_v2(train_data, reco_meta['user_field'], reco_meta['item_field'], reco_meta['features'][0]['id'])
-    similarity_reco.correlate(train_data_grouped, reco_meta['user_field'], reco_meta['item_field'], reco_meta['features'][0]['id'])
+    similarity_reco.correlate(train_data_grouped, reco_meta['user_field'], reco_meta['item_field'], reco_meta['features'][0]['id'], reco_meta['features'][0]['weight'])
 
 
 def recommend_popular(mongo):
