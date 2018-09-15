@@ -1,3 +1,4 @@
+from app.algo import Correlation, NearestNeightbours
 
 class PopularityRecommend:
 
@@ -50,7 +51,7 @@ class SimilarRecommend:
         self.similarity_model = train_data_grouped.sort_values(['score', self.item_id], ascending=[0, 1])
         return self.similarity_model
 
-    def create_model_v2(self, train_data, user_id, item_id, feature):
+    def build_correlation(self, train_data, user_id, item_id, feature, feature_weight):
         self.user_id = user_id
         self.item_id = item_id
         train_data['feature'] = train_data[feature]
@@ -58,15 +59,23 @@ class SimilarRecommend:
         feature_count = feature+'_count'
         train_data_grouped.rename(columns={feature: feature_count}, inplace=True)
         train_data_grouped[feature + '_score'] = self.calculate_score(train_data_grouped, feature_count)
-        return train_data_grouped
+        corr_matrix = Correlation.PearsonCorrelation().correlate(train_data_grouped, user_id, item_id,
+                                                                 feature, feature_weight)
+        print corr_matrix
+        # save correlation matrix
+        # comment below
+        self.recommend('gh', corr_matrix)
 
-    def calculate_score(self, train_data_grouped, feature_count):
+    def recommend(self, user, corr_matrix):
+        k_similar_users = NearestNeightbours.KNN(user, corr_matrix, 10).find_nearest()
+        #for user in k_similar_users:
+
+
+
+
+    @staticmethod
+    def calculate_score(train_data_grouped, feature_count):
         return train_data_grouped[feature_count].div(train_data_grouped[feature_count].sum())
-
-    def find_similar_users(self):
-
-
-        return [];
 
 
 
