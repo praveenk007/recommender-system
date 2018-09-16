@@ -3,3 +3,4 @@ venv/
 .idea/
 *.pyc
 app/configs/local.env
+.DS_Store

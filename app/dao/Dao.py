@@ -20,6 +20,12 @@ class mongo_model_dao():
         mongo.db.RecommenderModel.save(doc)
         print('model saved successfully!')
 
+    def find_all(self, mongo):
+        arr = []
+        for doc in mongo.db.RecommenderModel.find({}):
+            arr.append(doc)
+        return arr
+
 class mongo_reco_meta_dao():
 
     def getOne(self, mongo, id):

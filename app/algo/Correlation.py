@@ -8,54 +8,31 @@ class PearsonCorrelation:
     def __init__(self):
         print
 
-    def correlate(self, train_data_grouped, user_id, item_id, feature, weight):
+    def correlate(self, user_item_matrix, unique_objects):
 
-        """
-        :param self:
-        :param train_data_grouped:
-        :param user_id:
-        :param item_id:
-        :param feature:
-        :param weight:
-        :return:
-        """
-        unique_users = self.get_unique_objects(train_data_grouped, user_id)
-        unique_items = self.get_unique_objects(train_data_grouped, item_id)
+        corr_matrix = pd.DataFrame(np.nan, index=unique_objects, columns=unique_objects)
 
-        user_item_matrix = pd.DataFrame(index=unique_items, columns=unique_users)
-
-        for user in unique_users:
-            for item in unique_items:
-                temp_df = train_data_grouped.query(user_id + ' == @user and ' + item_id + '== @item').reset_index()
-                if temp_df.empty:
-                    user_item_matrix[user][item] = 0
-                else:
-                    user_item_matrix[user][item] = temp_df[feature + '_score'].iloc[0] * weight
-
-        unique_users = [s.encode('ascii') for s in unique_users]
-        corr_matrix = pd.DataFrame(np.nan, index=unique_users, columns=unique_users)
-
-        for user1 in unique_users:
+        for user1 in unique_objects:
             user1_df = user_item_matrix[user1]
             user1_nonzero_count = (user1_df != 0).sum()
             if user1_nonzero_count <= 1:
                 continue
             user1_nonzero_plans = user1_df.loc[user1_df != 0].index.tolist()
             user1_mean = user1_df.sum() / user1_nonzero_count
-            for user2 in unique_users:
+            for user2 in unique_objects:
                 if user1 == user2:
-                    # corr_matrix[user1][user2] = 0
+                    corr_matrix[user1][user2] = 0
                     continue
                 user2_df = user_item_matrix[user2]
                 user2_nonzero_count = (user2_df != 0).sum()
                 if user2_nonzero_count <= 1:
-                    # corr_matrix[user1][user2] = 0
+                    corr_matrix[user1][user2] = 0
                     continue
                 user2_mean = user2_df.sum() / user2_nonzero_count
                 user2_nonzero_plans = user2_df.loc[user2_df != 0].index.tolist()
                 common_plans = self.find_common_items(user1_nonzero_plans, user2_nonzero_plans)
                 if len(common_plans) <= 1:
-                    # corr_matrix[user1][user2] = 0
+                    corr_matrix[user1][user2] = 0
                     continue
                 num_summation = 0
                 user1item_minus_mean_sqr_summation = 0
@@ -89,7 +66,5 @@ class PearsonCorrelation:
             return [plan for plan in user1_nonzero_plans if plan in user2_nonzero_plans]
         return [plan for plan in user2_nonzero_plans if plan in user1_nonzero_plans]
 
-    @staticmethod
-    def get_unique_objects(data, ids):
-        return data[ids].unique()
+
 

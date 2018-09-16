@@ -1,4 +1,6 @@
 from app.algo import Correlation, NearestNeightbours
+import pandas as pd
+import numpy as np
 
 
 class PopularityBased:
@@ -33,24 +35,33 @@ class PopularityBased:
 class CollaborativeUserBased:
 
     def __init__(self):
-        self.train_data = None
-        self.user_id = None
-        self.item_id = None
-        self.similarity_model = None
+        print
 
-    def build_correlation(self, train_data_grouped, user_id, item_id, feature, feature_weight):
+    def get_user_item_matrix(self, train_data_grouped, unique_users, unique_items, user_id, item_id, feature, weight):
+        user_item_matrix = pd.DataFrame(np.nan, index=unique_items, columns=unique_users)
 
-        corr_matrix = Correlation.PearsonCorrelation().correlate(train_data_grouped, user_id, item_id,
-                                                                 feature, feature_weight)
+        for user in unique_users:
+            for item in unique_items:
+                temp_df = train_data_grouped.query(user_id + ' == @user and ' + item_id + '== @item').reset_index()
+                if temp_df.empty:
+                    user_item_matrix[user][item] = 0.0
+                else:
+                    user_item_matrix[user][item] = temp_df[feature + '_score'].iloc[0] * weight
+
+        return user_item_matrix
+
+    def build_correlation(self, user_item_matrix, unique_users, unique_items):
+
+        corr_matrix = Correlation.PearsonCorrelation().correlate(user_item_matrix, unique_users)
         print corr_matrix
         return corr_matrix
         # save correlation matrix
         # comment below
         # self.recommend('gh', corr_matrix)
 
-    def recommend(self, user, corr_matrix):
-        k_similar_users = NearestNeightbours.KNN(user, corr_matrix, 10).find_nearest()
-        #for user in k_similar_users:
+    def recommend(self, user, user_item_matrix, corr_matrix, k=10):
+        k_similar_users = NearestNeightbours.KNN(user, corr_matrix, k).find_nearest()
+        print k_similar_users
 
 
 

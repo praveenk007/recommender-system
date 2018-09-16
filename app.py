@@ -19,12 +19,16 @@ mongo = PyMongo(app)
 def create_model():
     _id = request.args.get('id')
     recommender_service.create_model(mongo, _id)
-    return jsonify({"status" : 200})
+    return jsonify({"status": 200})
 
 
 @app.route('/api/recommender/recommend', methods=['GET'])
 def recommend():
-    return []
+    _id = request.args.get('id')
+    user = request.args.get('user')
+    k = request.args.get('k')
+    recommender_service.recommend(mongo, _id, user, k)
+    return jsonify({"status": 200})
 
 
 if __name__ == '__main__':

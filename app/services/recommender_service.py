@@ -43,19 +43,41 @@ def create_model(mongo, _id):
     print train_data_grouped
 
     # make this async
-    drop_then_persist_model(mongo, train_data_grouped)
+    # drop_then_persist_model(mongo, train_data_grouped)
 
     reco_system = get_system(reco_meta['algo'])
 
-    matrix = reco_system.build_correlation(train_data_grouped, user_id, item_id, feature, feature_weight)
-    path = 'dataset/' + reco_meta['_id'] + '_corr_matrix.h5'
+    unique_users = [s.encode('ascii') for s in get_unique_objects(train_data_grouped, user_id)]
+    print unique_users
+    unique_items = [s.encode('ascii') for s in get_unique_objects(train_data_grouped, item_id)]
+    user_item_matrix = reco_system.get_user_item_matrix(train_data_grouped, unique_users, unique_items, user_id, item_id, feature, feature_weight)
+    print user_item_matrix.dtypes
+    path = 'dataset/' + reco_meta['_id'] + '.h5'
+    HDF5Dao.save(path, 'user_item_matrix', user_item_matrix)
+
+    matrix = reco_system.build_correlation(user_item_matrix, unique_users, unique_items)
+    print 'saving corr matrix'
     HDF5Dao.save(path, 'correlation_matrix', matrix)
 
+
+def recommend(mongo, _id, user, k=10):
+    reco_meta = Dao.mongo_reco_meta_dao().getOne(mongo, _id)
+    reco_system = get_system(reco_meta['algo'])
+    hdf5path = 'dataset/' + reco_meta['_id'] + '.h5'
+    corr_matrix = HDF5Dao.get(hdf5path, 'correlation_matrix')
+    user_item_matrix = HDF5Dao.get(hdf5path, 'user_item_matrix')
+    print user_item_matrix
+    reco_system.recommend(user, user_item_matrix, corr_matrix, k)
 
 def get_system(algo):
     if algo == 'colab_user_based':
         collab_ubased = Recommenders.CollaborativeUserBased()
+    # if algo == 'colab_item_based':
     return collab_ubased
+
+
+def get_trained_aggregated_data(mongo):
+    return Dao.mongo_model_dao().find_all(mongo)
 
 
 def drop_then_persist_model(mongo, train_data_grouped):
@@ -65,6 +87,10 @@ def drop_then_persist_model(mongo, train_data_grouped):
 
 def calculate_score(train_data_grouped, feature_count):
     return train_data_grouped[feature_count].div(train_data_grouped[feature_count].sum())
+
+
+def get_unique_objects(data, ids):
+    return data[ids].unique()
 
 
 
