@@ -6,5 +6,5 @@ class KNN:
         self.k = k
 
     def find_nearest(self):
-        return self.corr_matrix.sort_values([self.object], ascending=[0]).head(2).index.tolist()
+        return self.corr_matrix.sort_values([self.object], ascending=[0]).head(self.k).index.tolist()
 

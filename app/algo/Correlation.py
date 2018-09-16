@@ -1,5 +1,6 @@
 import pandas as pd
 import math
+import numpy as np
 
 
 class PearsonCorrelation:
@@ -31,10 +32,11 @@ class PearsonCorrelation:
                 else:
                     user_item_matrix[user][item] = temp_df[feature + '_score'].iloc[0] * weight
 
-        corr_matrix = pd.DataFrame(index=unique_users, columns=unique_users)
+        unique_users = [s.encode('ascii') for s in unique_users]
+        corr_matrix = pd.DataFrame(np.nan, index=unique_users, columns=unique_users)
 
         for user1 in unique_users:
-            user1_df = user_item_matrix[user1].astype(str).astype(float)
+            user1_df = user_item_matrix[user1]
             user1_nonzero_count = (user1_df != 0).sum()
             if user1_nonzero_count <= 1:
                 continue
@@ -42,15 +44,18 @@ class PearsonCorrelation:
             user1_mean = user1_df.sum() / user1_nonzero_count
             for user2 in unique_users:
                 if user1 == user2:
+                    # corr_matrix[user1][user2] = 0
                     continue
                 user2_df = user_item_matrix[user2]
                 user2_nonzero_count = (user2_df != 0).sum()
                 if user2_nonzero_count <= 1:
+                    # corr_matrix[user1][user2] = 0
                     continue
                 user2_mean = user2_df.sum() / user2_nonzero_count
                 user2_nonzero_plans = user2_df.loc[user2_df != 0].index.tolist()
                 common_plans = self.find_common_items(user1_nonzero_plans, user2_nonzero_plans)
                 if len(common_plans) <= 1:
+                    # corr_matrix[user1][user2] = 0
                     continue
                 num_summation = 0
                 user1item_minus_mean_sqr_summation = 0
@@ -73,7 +78,6 @@ class PearsonCorrelation:
                     corr_matrix[user1][user2] = 0
                 else:
                     sqr = math.sqrt(user1item_minus_mean_sqr_summation * user2item_minus_mean_sqr_summation)
-                    print sqr
                     corr_matrix[user1][user2] = num_summation / (
                         sqr
                     )
