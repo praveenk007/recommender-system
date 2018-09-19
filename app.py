@@ -27,8 +27,8 @@ def recommend():
     _id = request.args.get('id')
     user = request.args.get('user')
     k = request.args.get('k')
-    recommender_service.recommend(mongo, _id, user, k)
-    return jsonify({"status": 200})
+    objects = recommender_service.recommend(mongo, _id, user, k)
+    return jsonify({"status": 200, "data":  {"recommendations": objects}})
 
 
 if __name__ == '__main__':

@@ -51,17 +51,21 @@ class CollaborativeUserBased:
         return user_item_matrix
 
     def build_correlation(self, user_item_matrix, unique_users, unique_items):
-
         corr_matrix = Correlation.PearsonCorrelation().correlate(user_item_matrix, unique_users)
-        print corr_matrix
         return corr_matrix
-        # save correlation matrix
-        # comment below
-        # self.recommend('gh', corr_matrix)
 
     def recommend(self, user, user_item_matrix, corr_matrix, k=10):
         k_similar_users = NearestNeightbours.KNN(user, corr_matrix, k).find_nearest()
         print k_similar_users
+        print corr_matrix
+        print user_item_matrix
+        recommendations = set()
+        for user in k_similar_users:
+            sorted_df = user_item_matrix[user].sort_values(ascending=False)
+            elements = sorted_df.loc[sorted_df != 0].index.tolist()
+            for element in elements:
+                recommendations.add(element)
+        return list(recommendations)
 
 
 

@@ -66,8 +66,7 @@ def recommend(mongo, _id, user, k=10):
     hdf5path = 'dataset/' + reco_meta['_id'] + '.h5'
     corr_matrix = HDF5Dao.get(hdf5path, 'correlation_matrix')
     user_item_matrix = HDF5Dao.get(hdf5path, 'user_item_matrix')
-    print user_item_matrix
-    reco_system.recommend(user, user_item_matrix, corr_matrix, k)
+    return reco_system.recommend(user, user_item_matrix, corr_matrix, k)
 
 def get_system(algo):
     if algo == 'colab_user_based':
