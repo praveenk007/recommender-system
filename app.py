@@ -15,14 +15,14 @@ app.config['MONGO_URI'] = config.get('MONGO', 'db.uri')
 mongo = PyMongo(app)
 
 
-@app.route('/api/recommender/model/create', methods=['GET'])
+@app.route('/api/recommender/v1/model/create', methods=['GET'])
 def create_model():
     _id = request.args.get('id')
     recommender_service.create_model(mongo, _id)
     return jsonify({"status": 200})
 
 
-@app.route('/api/recommender/recommend', methods=['GET'])
+@app.route('/api/recommender/v1/recommend', methods=['GET'])
 def recommend():
     _id = request.args.get('id')
     user = request.args.get('user')
