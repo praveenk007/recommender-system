@@ -2,7 +2,7 @@ class mongo_data_dao():
 
     def find_all(self, mongo):
         arr = []
-        for doc in mongo.db.RecommenderData.find({}):
+        for doc in mongo.db.ml_result.find({}):
             arr.append(doc)
         return arr
 

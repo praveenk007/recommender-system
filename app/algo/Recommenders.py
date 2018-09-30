@@ -1,6 +1,7 @@
 from app.algo import Correlation, NearestNeightbours
 import pandas as pd
 import numpy as np
+import time
 
 
 class PopularityBased:
@@ -39,8 +40,11 @@ class CollaborativeUserBased:
 
     def get_user_item_matrix(self, train_data_grouped, unique_users, unique_items, user_id, item_id, feature, weight):
         user_item_matrix = pd.DataFrame(np.nan, index=unique_items, columns=unique_users)
-
+        tot_start = time.time()
+        len_items = len(unique_items)
         for user in unique_users:
+            print user
+            start = time.time()
             for item in unique_items:
                 temp_df = train_data_grouped.query(user_id + ' == @user and ' + item_id + '== @item').reset_index()
                 if temp_df.empty:
@@ -48,6 +52,10 @@ class CollaborativeUserBased:
                 else:
                     user_item_matrix[user][item] = temp_df[feature + '_score'].iloc[0] * weight
 
+            stop = time.time()
+            print('for user ', user, ', ratings done for items ', len_items, ', in time ', stop-start)
+        tot_stop = time.time()
+        print('total time ', tot_stop-tot_start)
         return user_item_matrix
 
     def build_correlation(self, user_item_matrix, unique_users, unique_items):

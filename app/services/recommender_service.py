@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 def visualize_data():
     all_data = pandas.read_csv('dataset/user_activity.txt')
 
-    all_data_grouped = all_data.groupby(['plan','state']).agg({'count' : 'count'}).reset_index()
+    all_data_grouped = all_data.groupby(['plan', 'state']).agg({'count': 'count'}).reset_index()
     grouped_count = all_data_grouped['count'].sum()
     all_data_grouped['percentage'] = all_data_grouped['count'].div(grouped_count) * 100
 
@@ -26,30 +26,46 @@ def create_model_v1(mongo):
     print(op)
 """
 
+
 def create_model(mongo, _id):
     all_data = pandas.DataFrame.from_dict(Dao.mongo_data_dao().find_all(mongo))
     train_data, test_data = train_test_split(all_data, test_size=0.10, random_state=0)
 
     reco_meta = Dao.mongo_reco_meta_dao().getOne(mongo, _id)
+    print reco_meta
     user_id = reco_meta['user_field']
     item_id = reco_meta['item_field']
-    feature = reco_meta['features'][0]['id']
-    feature_weight = reco_meta['features'][0]['weight']
-    train_data['feature'] = train_data[feature]
-    train_data_grouped = train_data.groupby([user_id, item_id, 'feature']).agg({feature: 'count'}).reset_index()
-    feature_count = feature + '_count'
-    train_data_grouped.rename(columns={feature: feature_count}, inplace=True)
-    train_data_grouped[feature + '_score'] = calculate_score(train_data_grouped, feature_count)
-    print train_data_grouped
+    feature = item_id
+    feature_weight = 1
 
-    # make this async
-    # drop_then_persist_model(mongo, train_data_grouped)
+    if 'features' in reco_meta:
+        feature = reco_meta['features'][0]['id']
+        feature_weight = reco_meta['features'][0]['weight']
+        train_data['feature'] = train_data[feature]
+        train_data_grouped = train_data.groupby([user_id, item_id, 'feature']).agg({feature: 'count'}).reset_index()
+        if not reco_meta['isScored']:
+            feature_count = feature + '_count'
+            train_data_grouped.rename(columns={feature: feature_count}, inplace=True)
+            train_data_grouped[feature + '_score'] = calculate_score(train_data_grouped, feature_count)
+        else:
+            train_data_grouped.rename(columns={reco_meta['scoreField']: feature + '_score'}, inplace=True)
+    else:
+        train_data['feature'] = train_data[feature]
+        train_data_grouped = train_data
+        if not reco_meta['isScored']:
+            feature_count = feature + '_count'
+            train_data_grouped.rename(columns={'feature': feature_count}, inplace=True)
+            train_data_grouped[feature + '_score'] = calculate_score(train_data_grouped, feature_count)
+        else:
+            train_data_grouped.rename(columns={reco_meta['score_field']: feature + '_score'}, inplace=True)
+
+    print train_data_grouped.columns.values
 
     reco_system = get_system(reco_meta['algo'])
-
-    unique_users = [s.encode('ascii') for s in get_unique_objects(train_data_grouped, user_id)]
-    print unique_users
-    unique_items = [s.encode('ascii') for s in get_unique_objects(train_data_grouped, item_id)]
+    unique_users = [s for s in get_unique_objects(train_data_grouped, user_id)]
+    print 'calculated unique users'
+    unique_items = [s for s in get_unique_objects(train_data_grouped, item_id)]
+    print 'calculated unique items'
     user_item_matrix = reco_system.get_user_item_matrix(train_data_grouped, unique_users, unique_items, user_id, item_id, feature, feature_weight)
     print user_item_matrix.dtypes
     path = 'dataset/' + reco_meta['_id'] + '.h5'
@@ -68,6 +84,7 @@ def recommend(mongo, _id, user, k=10):
     user_item_matrix = HDF5Dao.get(hdf5path, 'user_item_matrix')
     return reco_system.recommend(user, user_item_matrix, corr_matrix, k)
 
+
 def get_system(algo):
     if algo == 'colab_user_based':
         collab_ubased = Recommenders.CollaborativeUserBased()
@@ -85,6 +102,7 @@ def drop_then_persist_model(mongo, train_data_grouped):
 
 
 def calculate_score(train_data_grouped, feature_count):
+    print 'Calculating score'
     return train_data_grouped[feature_count].div(train_data_grouped[feature_count].sum())
 
 
